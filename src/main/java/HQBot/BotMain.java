@@ -37,15 +37,13 @@ import discord4j.core.DiscordClientBuilder;
 import discord4j.core.event.domain.lifecycle.ReadyEvent;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Message;
-import discord4j.core.object.entity.MessageChannel;
 import discord4j.core.object.entity.TextChannel;
 import discord4j.core.object.util.Snowflake;
-import reactor.core.publisher.Flux;
-//import discord4j.core.spec.MessageCreateSpec;
+
 
 public class BotMain {
-	private static final String BOT_TOKEN = "";
-	private static final String BEARER = "";
+	private static final String BOT_TOKEN = "XXX";
+	private static final String BEARER = "Bearer XXX";
 	
 	private final static ArrayList<TextChannel> channels = new ArrayList<TextChannel>();
 	private final static HashMap<Long, Question> questions = new HashMap<Long, Question>();
@@ -64,7 +62,7 @@ public class BotMain {
 		client.getEventDispatcher().on(ReadyEvent.class)
 			.subscribe(ready -> System.out.println("Logged in as " + ready.getSelf().getUsername()));
 		
-		channels.add((TextChannel) client.getChannelById(Snowflake.of("")).block());
+		channels.add((TextChannel) client.getChannelById(Snowflake.of("XXX")).block());
 		
 		client.getEventDispatcher().on(MessageCreateEvent.class)
 			.map(MessageCreateEvent::getMessage)
