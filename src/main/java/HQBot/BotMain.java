@@ -37,49 +37,58 @@ import discord4j.core.DiscordClientBuilder;
 import discord4j.core.event.domain.lifecycle.ReadyEvent;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Message;
+import discord4j.core.object.entity.MessageChannel;
 import discord4j.core.object.entity.TextChannel;
 import discord4j.core.object.util.Snowflake;
+import reactor.core.publisher.Flux;
 //import discord4j.core.spec.MessageCreateSpec;
 
 public class BotMain {
 	
-	//REPLACE XXX WITH YOUR DISCORD BOT TOKEN
+	//INSERT YOUR DISCORD TOKEN AND HQ BEARER TOKEN HERE
 	private static final String BOT_TOKEN = "XXX";
-	
-	//REPLACE XXX WITH YOUR BEARER TOKEN
-	private static final String BEARER = "Bearer XXX";
+	private static final String BEARER = "XXX";
 	
 	private final static ArrayList<TextChannel> channels = new ArrayList<TextChannel>();
 	private final static HashMap<Long, Question> questions = new HashMap<Long, Question>();
+	private final static HashMap<Long, Question> questionVerify = new HashMap<Long, Question>();
 	private final static HashSet<Long> summaryIDs = new HashSet<Long>();
 	private final static HashMap<Long, Puzzle> puzzles = new HashMap<Long, Puzzle>();
+	private final static HashMap<Long, Puzzle> puzzleVerify = new HashMap<Long, Puzzle>();
 	private final static HashSet<Long> roundIDs = new HashSet<Long>();
 	private static int ended = 0;
 
 	public static void main(String[] args) {
-		//TODO listener to restart client
+		//TODO Still need to work out how to build a listener to run hq client from discord instead of
+		//running it directly from main.
+		
 		final DiscordClient client = new DiscordClientBuilder(BOT_TOKEN).build();
 		
 		client.getEventDispatcher().on(ReadyEvent.class)
 			.subscribe(ready -> System.out.println("Logged in as " + ready.getSelf().getUsername()));
 		
-		//REPLACE XXX WITH YOUR CHANNEL ID
+		
+		//ADD THE DISCORD CHANNEL ID FOR ANY CHANNELS YOU WANT THIS BOT TO TALK ON HERE
+		channels.add((TextChannel) client.getChannelById(Snowflake.of("XXX")).block());
 		channels.add((TextChannel) client.getChannelById(Snowflake.of("XXX")).block());
 		
 		client.getEventDispatcher().on(MessageCreateEvent.class)
 			.map(MessageCreateEvent::getMessage)
-        	.filter(msg -> msg.getContent().map("!ping"::equals).orElse(false))
+        	.filter(msg -> msg.getContent().map("./ping"::equals).orElse(false))
         	.flatMap(Message::getChannel)
-        	.flatMap(channel -> channel.createMessage("Pong!"))
+        	.flatMap(channel -> channel.createMessage("Yeah, yeah. I'm here."))
         	.subscribe();
 		
 		hqListen();
 		
 		client.login().block();
-		
 	}
 
 	private static void hqListen() {
+		
+		for(TextChannel channel : channels) {
+			channel.createMessage("Starting HQ client").block();
+		}
 		
 		System.out.println();
 		
@@ -90,6 +99,8 @@ public class BotMain {
 			summaryIDs.clear();
 			puzzles.clear();
 			roundIDs.clear();
+			questionVerify.clear();
+			puzzleVerify.clear();
 			
 			//Create an Http client and send a request to HQ servers using our bearer token and the hq client
 			HttpClient client = HttpClients.custom().build();
@@ -165,29 +176,38 @@ public class BotMain {
 									
 											//if it's a new question, print the question and answers to console
 											try {
-												//TODO figure out potential payouts
-												//TODO message verification before printout
 												JSONObject data = (JSONObject) new JSONParser().parse(message);
+												Long prize = (Long) jo.get("prize");
 												
 												if(data.get("type").equals("question")){
-													if(!questions.containsKey((Long) data.get("questionId"))) {
+													if(!questionVerify.containsKey((Long) data.get("questionId"))) {
+														Question q = new Question(data);
+														questionVerify.put(q.getID(), q);
+													}
+													else if(!questions.containsKey((Long) data.get("questionId"))) {
+														
 														Question q = new Question(data);
 														
-														System.out.println();
-														String tempMessage = q.getQuestion();
-														
-														for(int i=0; i<3; i++) {
-															tempMessage += "\n" + q.getAnswer(i);
+														if(questionVerify.containsKey(q.getID())
+																&& questionVerify.get(q.getID()).getQuestion()
+																.equals(q.getQuestion())){
+															
+															System.out.println();
+															String tempMessage = q.getQuestion();
+															
+															for(int i=0; i<3; i++) {
+																tempMessage += "\n" + q.getAnswer(i);
+															}
+															
+															System.out.println(tempMessage);
+															for(TextChannel channel : channels) {
+																String s = tempMessage;
+																channel.createMessage(spec -> spec.setEmbed(embed -> 
+																embed.setDescription(s))).block();
+															}
+															
+															questions.put(q.getID(), q);
 														}
-														
-														System.out.println(tempMessage);
-														for(TextChannel channel : channels) {
-															String s = tempMessage;
-															channel.createMessage(spec -> spec.setEmbed(embed -> 
-															embed.setDescription(s))).block();
-														}
-														
-														questions.put(q.getID(), q);
 													}
 												}
 												
@@ -208,6 +228,8 @@ public class BotMain {
 															+ " | " + (i == q.getCorrectIndex() 
 															? "CORRECT!" : "wrong...");
 														}
+														tempMessage += "\n Estimated payout: ";
+														tempMessage += prize/q.getCount(q.getCorrectIndex());
 														
 														System.out.println(tempMessage);
 														for(TextChannel channel : channels) {
@@ -220,7 +242,11 @@ public class BotMain {
 												}
 												
 												else if(data.get("type").equals("startRound")) {
-													if(!puzzles.containsKey((Long) data.get("roundId"))){
+													if(!puzzleVerify.containsKey((Long) data.get("roundId"))) {
+														Puzzle p = new Puzzle(data);
+														puzzleVerify.put(p.getID(), p);
+													}
+													else if(!puzzles.containsKey((Long) data.get("roundId"))) {
 														Puzzle p = new Puzzle(data);
 														puzzles.put(p.getID(), p);
 														
@@ -250,6 +276,9 @@ public class BotMain {
 																+ "\nAnswer: " + p.getAnswer() + "\n"
 																+ p.getSolved() + " are still in the game | "
 																+ p.getUnsolved() + " just lost";
+														
+														tempMessage += "\n Estimated payout: ";
+														tempMessage += prize/p.getSolved();
 														
 														System.out.println(tempMessage);
 														for(TextChannel channel : channels) {
