@@ -1,10 +1,8 @@
 # HQ-Discord
 Just scrapes the HQ api and prints the question/puzzle data out to a discord channel
 
-This is still a work in progress. Need to implement verification on questions/answers
-to ensure that the bot doesn't double print anything. Also plan on implementing projected payout
-for words and non-jackpot trivia games. Hopefully I'll eventually be able to find a pattern
-in how checkpoint payouts work and implement that, but that isn't a major concern for me right now.
+This is still a work in progress. Code style is kinda awful, this is mostly an exercise in teaching
+myself about interacting with http clients and websockets, with a little React thrown in for good measure.
 
 
 HOW TO IMPLEMENT
