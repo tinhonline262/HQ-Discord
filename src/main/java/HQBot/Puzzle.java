@@ -25,6 +25,7 @@ public class Puzzle {
 		puzzle = new String[array.size()];
 		for(int i=0; i<puzzleSize(); i++) {
 			puzzle[i] = (String) array.get(i);
+			puzzle[i] = puzzle[i].replace('*', '-');
 		}
 	}
 	

@@ -44,10 +44,8 @@ import reactor.core.publisher.Flux;
 //import discord4j.core.spec.MessageCreateSpec;
 
 public class BotMain {
-	
-	//INSERT YOUR DISCORD TOKEN AND HQ BEARER TOKEN HERE
-	private static final String BOT_TOKEN = "XXX";
-	private static final String BEARER = "XXX";
+	private static final String BOT_TOKEN = "";
+	private static final String BEARER = "";
 	
 	private final static ArrayList<TextChannel> channels = new ArrayList<TextChannel>();
 	private final static HashMap<Long, Question> questions = new HashMap<Long, Question>();
@@ -57,24 +55,20 @@ public class BotMain {
 	private final static HashMap<Long, Puzzle> puzzleVerify = new HashMap<Long, Puzzle>();
 	private final static HashSet<Long> roundIDs = new HashSet<Long>();
 	private static int ended = 0;
+	private static boolean printed = false;
 
 	public static void main(String[] args) {
-		//TODO Still need to work out how to build a listener to run hq client from discord instead of
-		//running it directly from main.
-		
+		//TODO listener to restart client
 		final DiscordClient client = new DiscordClientBuilder(BOT_TOKEN).build();
 		
 		client.getEventDispatcher().on(ReadyEvent.class)
 			.subscribe(ready -> System.out.println("Logged in as " + ready.getSelf().getUsername()));
 		
-		
-		//ADD THE DISCORD CHANNEL ID FOR ANY CHANNELS YOU WANT THIS BOT TO TALK ON HERE
-		channels.add((TextChannel) client.getChannelById(Snowflake.of("XXX")).block());
-		channels.add((TextChannel) client.getChannelById(Snowflake.of("XXX")).block());
+		channels.add((TextChannel) client.getChannelById(Snowflake.of("")).block());
 		
 		client.getEventDispatcher().on(MessageCreateEvent.class)
 			.map(MessageCreateEvent::getMessage)
-        	.filter(msg -> msg.getContent().map("./ping"::equals).orElse(false))
+        	.filter(msg -> msg.getContent().map("!ping"::equals).orElse(false))
         	.flatMap(Message::getChannel)
         	.flatMap(channel -> channel.createMessage("Yeah, yeah. I'm here."))
         	.subscribe();
@@ -172,7 +166,7 @@ public class BotMain {
 									session.addMessageHandler(new MessageHandler.Whole<String>() {
 										
 										@Override
-										public void onMessage(String message) {
+										public synchronized void onMessage(String message) {
 									
 											//if it's a new question, print the question and answers to console
 											try {
@@ -187,6 +181,7 @@ public class BotMain {
 													else if(!questions.containsKey((Long) data.get("questionId"))) {
 														
 														Question q = new Question(data);
+														questions.put(q.getID(), q);
 														
 														if(questionVerify.containsKey(q.getID())
 																&& questionVerify.get(q.getID()).getQuestion()
@@ -198,15 +193,16 @@ public class BotMain {
 															for(int i=0; i<3; i++) {
 																tempMessage += "\n" + q.getAnswer(i);
 															}
-															
-															System.out.println(tempMessage);
-															for(TextChannel channel : channels) {
-																String s = tempMessage;
-																channel.createMessage(spec -> spec.setEmbed(embed -> 
-																embed.setDescription(s))).block();
+															if(!printed) {
+															printed = true;
+																System.out.println(tempMessage);
+																for(TextChannel channel : channels) {
+																	String s = tempMessage;
+																	channel.createMessage(spec -> spec.setEmbed(embed -> 
+																	embed.setDescription(s))).block();
+																}
 															}
-															
-															questions.put(q.getID(), q);
+													
 														}
 													}
 												}
@@ -218,26 +214,30 @@ public class BotMain {
 															&& questions.containsKey((Long) data.get("questionId"))) {
 														Question q = questions.get((Long) data.get("questionId"));
 														q.questionSummary((JSONArray) data.get("answerCounts"));
-														
+														summaryIDs.add(q.getID());
 														System.out.println();
 														
 														String tempMessage = q.getQuestion();
 														
 														for(int i=0; i<3; i++) {
-															tempMessage += "/n" + q.getAnswer(i) + " | " + q.getCount(i)
-															+ " | " + (i == q.getCorrectIndex() 
+															tempMessage += "\n" + q.getAnswer(i) + " | " + q.getCount(i)
+															+ " picked | " + (i == q.getCorrectIndex() 
 															? "CORRECT!" : "wrong...");
 														}
-														tempMessage += "\n Estimated payout: ";
-														tempMessage += prize/q.getCount(q.getCorrectIndex());
+														tempMessage += "\nEstimated payout: ";
+														tempMessage += String.format("%.2f", new Double(prize)
+																/ new Double(q.getCount(q.getCorrectIndex())));
 														
-														System.out.println(tempMessage);
-														for(TextChannel channel : channels) {
-															String s = tempMessage;
-															channel.createMessage(spec -> spec.setEmbed(embed -> 
-															embed.setDescription(s))).block();
+														if(printed) {
+															printed = false;
+															System.out.println(tempMessage);
+															for(TextChannel channel : channels) {
+																String s = tempMessage;
+																channel.createMessage(spec -> spec.setEmbed(embed -> 
+																embed.setDescription(s))).block();
+															}
 														}
-														summaryIDs.add(q.getID());
+														
 													}													
 												}
 												
@@ -255,11 +255,14 @@ public class BotMain {
 														String tempMessage = p.getHint();
 														tempMessage += "\n" + p.getAnswer();
 														
-														System.out.println(tempMessage);
-														for(TextChannel channel : channels) {
-															String s = tempMessage;
-															channel.createMessage(spec -> spec.setEmbed(embed -> 
-															embed.setDescription(s))).block();
+														if(!printed) {
+															printed = true;															
+															System.out.println(tempMessage);
+															for(TextChannel channel : channels) {
+																String s = tempMessage;
+																channel.createMessage(spec -> spec.setEmbed(embed -> 
+																embed.setDescription(s))).block();
+															}
 														}
 													}
 												}
@@ -278,13 +281,16 @@ public class BotMain {
 																+ p.getUnsolved() + " just lost";
 														
 														tempMessage += "\n Estimated payout: ";
-														tempMessage += prize/p.getSolved();
+														tempMessage += String.format("%.2f", new Double(prize)/ new Double(p.getSolved()));
 														
-														System.out.println(tempMessage);
-														for(TextChannel channel : channels) {
-															String s = tempMessage;
-															channel.createMessage(spec -> spec.setEmbed(embed -> 
-															embed.setDescription(s))).block();
+														if(printed) {
+															printed = false;
+															System.out.println(tempMessage);
+															for(TextChannel channel : channels) {
+																String s = tempMessage;
+																channel.createMessage(spec -> spec.setEmbed(embed -> 
+																embed.setDescription(s))).block();
+															}
 														}
 
 													}
