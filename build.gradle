@@ -9,6 +9,21 @@
 plugins {
     // Apply the java-library plugin to add support for Java Library
     id 'java-library'
+    id 'eclipse'
+}
+
+sourceCompatibility=1.8
+targetCompatibility=1.8
+
+task fatJar(type: Jar) {
+	manifest {
+        attributes 'Implementation-Title': 'HQ-Trivia-Tool',  
+        	'Implementation-Version': '1.0',
+        	'Main-Class': 'HQBot.BotMain'
+    }
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
 }
 
 repositories {
@@ -24,11 +39,11 @@ dependencies {
     
     compile 'com.googlecode.json-simple:json-simple:1.1.1'
     compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5'
-
-    // This dependency is used internally, and not exposed to consumers on their own compile classpath.
-    implementation 'com.google.guava:guava:26.0-jre'
-	implementation 'com.discord4j:discord4j-core:3.0.6'
-	implementation 'org.glassfish.tyrus.bundles:tyrus-standalone-client:1.12'
+	compile group: 'javax.websocket', name: 'javax.websocket-api', version: '1.1'
+	compile group: 'org.reactivestreams', name: 'reactive-streams', version: '1.0.2'
+    compile 'com.google.guava:guava:26.0-jre'
+	compile 'com.discord4j:discord4j-core:3.0.6'
+	compile 'org.glassfish.tyrus.bundles:tyrus-standalone-client:1.12'
 
     // Use JUnit test framework
     testImplementation 'junit:junit:4.12'

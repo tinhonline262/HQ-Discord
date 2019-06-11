@@ -31,6 +31,7 @@ import org.glassfish.tyrus.client.ClientManager;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.reactivestreams.Publisher;
 
 import discord4j.core.DiscordClient;
 import discord4j.core.DiscordClientBuilder;
@@ -40,10 +41,9 @@ import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.TextChannel;
 import discord4j.core.object.util.Snowflake;
 
-
 public class BotMain {
 	private static final String BOT_TOKEN = "XXX";
-	private static final String BEARER = "Bearer XXX";
+	private static final String BEARER = "XXX";
 	
 	private final static ArrayList<TextChannel> channels = new ArrayList<TextChannel>();
 	private final static HashMap<Long, Question> questions = new HashMap<Long, Question>();
@@ -56,8 +56,8 @@ public class BotMain {
 	private static boolean printed = false;
 
 	public static void main(String[] args) {
-		//TODO listener to restart client
-		final DiscordClient client = new DiscordClientBuilder(BOT_TOKEN).build();
+		//TODO make it so only one instance of hqListen can run at a time.
+		final DiscordClient client = new DiscordClientBuilder(BOT_TOKEN).build();		
 		
 		client.getEventDispatcher().on(ReadyEvent.class)
 			.subscribe(ready -> System.out.println("Logged in as " + ready.getSelf().getUsername()));
@@ -66,20 +66,25 @@ public class BotMain {
 		
 		client.getEventDispatcher().on(MessageCreateEvent.class)
 			.map(MessageCreateEvent::getMessage)
-        	.filter(msg -> msg.getContent().map("!ping"::equals).orElse(false))
+        	.filter(msg -> msg.getContent().map(".check"::equals).orElse(false))
         	.flatMap(Message::getChannel)
         	.flatMap(channel -> channel.createMessage("Yeah, yeah. I'm here."))
         	.subscribe();
 		
-		hqListen();
+		client.getEventDispatcher().on(MessageCreateEvent.class)
+			.map(MessageCreateEvent::getMessage)
+			.filter(msg->msg.getContent().map(".start"::equals).orElse(false))
+			.flatMap(msg -> hqListen())
+			.subscribe();
 		
 		client.login().block();
+		
 	}
 
-	private static void hqListen() {
+	private static Publisher<?> hqListen() {
 		
 		for(TextChannel channel : channels) {
-			channel.createMessage("Starting HQ client").block();
+			channel.createMessage("You got it, boss").block();
 		}
 		
 		System.out.println();
@@ -130,6 +135,11 @@ public class BotMain {
 						continue;					
 					}
 					
+					for(TextChannel channel : channels) {
+						channel.createMessage(spec -> spec.setEmbed(embed ->
+							embed.addField("Get Ready!", "HQ " + jo.get("gameType") 
+							+ " broadcast is live", false))).block();
+					}
 					
 					//grab the socketUrl, replace https with wss
 					socketURL = (String) broadcast.get("socketUrl");
@@ -163,8 +173,10 @@ public class BotMain {
 								try {								
 									session.addMessageHandler(new MessageHandler.Whole<String>() {
 										
+										private String delimiter = "";
+
 										@Override
-										public synchronized void onMessage(String message) {
+										public void onMessage(String message) {
 									
 											//if it's a new question, print the question and answers to console
 											try {
@@ -172,38 +184,40 @@ public class BotMain {
 												Long prize = (Long) jo.get("prize");
 												
 												if(data.get("type").equals("question")){
-													if(!questionVerify.containsKey((Long) data.get("questionId"))) {
-														Question q = new Question(data);
-														questionVerify.put(q.getID(), q);
-													}
-													else if(!questions.containsKey((Long) data.get("questionId"))) {
+													if(!questions.containsKey((Long) data.get("questionId"))) {
 														
 														Question q = new Question(data);
-														questions.put(q.getID(), q);
-														
-														if(questionVerify.containsKey(q.getID())
-																&& questionVerify.get(q.getID()).getQuestion()
-																.equals(q.getQuestion())){
+															questions.put(q.getID(), q);
 															
-															System.out.println();
-															String tempMessage = q.getQuestion();
+															String tempText = q.getQuestion();
+															String tempMessage = "http://www.google.com/search?q="
+																+ q.getQuestion().replace(' ', '+');
 															
+															String tempAnswer[] = new String[3];
+															int max = 0;
 															for(int i=0; i<3; i++) {
-																tempMessage += "\n" + q.getAnswer(i);
+																if(q.getAnswer(i).length() > max) max = q.getAnswer(i).length();
+																tempAnswer[i] = q.getAnswer(i);
 															}
+															
+															delimiter = new String(new char[max]).replace('\0', '-');
+															
+															System.out.println("going into the printer check");
 															if(!printed) {
-															printed = true;
-																System.out.println(tempMessage);
+																System.out.println("inside printed");
+																printed = true;
 																for(TextChannel channel : channels) {
-																	String s = tempMessage;
 																	channel.createMessage(spec -> spec.setEmbed(embed -> 
-																	embed.setDescription(s))).block();
+																	embed.setTitle(tempText)
+																	.setUrl(tempMessage)
+																	.addField(tempAnswer[0], delimiter, false)
+																	.addField(tempAnswer[1], delimiter, false)
+																	.addField(tempAnswer[2], delimiter, false))).block();
 																}
-															}
-													
+															}													
 														}
 													}
-												}
+												
 												
 												//if the question is over, print the answer and number
 												//that picked beside each answer.
@@ -216,23 +230,26 @@ public class BotMain {
 														System.out.println();
 														
 														String tempMessage = q.getQuestion();
-														
+														String[] tempAnswers = new String[3];
 														for(int i=0; i<3; i++) {
-															tempMessage += "\n" + q.getAnswer(i) + " | " + q.getCount(i)
-															+ " picked | " + (i == q.getCorrectIndex() 
-															? "CORRECT!" : "wrong...");
+															tempAnswers[i] = q.getAnswer(i);
 														}
-														tempMessage += "\nEstimated payout: ";
-														tempMessage += String.format("%.2f", new Double(prize)
+														String payout = "Estimated payout: $" 
+																+ String.format("%.2f", new Double(prize)
 																/ new Double(q.getCount(q.getCorrectIndex())));
 														
 														if(printed) {
 															printed = false;
-															System.out.println(tempMessage);
 															for(TextChannel channel : channels) {
-																String s = tempMessage;
 																channel.createMessage(spec -> spec.setEmbed(embed -> 
-																embed.setDescription(s))).block();
+																embed.setTitle(tempMessage)
+																.addField(tempAnswers[0], q.getCorrectIndex() == 0 ? 
+																		+ q.getCount(0) + " | CORRECT" : "" + q.getCount(0), false)
+																.addField(tempAnswers[1], q.getCorrectIndex() == 1 ? 
+																		q.getCount(1) + " | CORRECT" : "" + q.getCount(1), false)
+																.addField(tempAnswers[2], q.getCorrectIndex() == 2 ? 
+																		q.getCount(2) + " | CORRECT": "" + q.getCount(2), false)
+																.setDescription(payout))).block();
 															}
 														}
 														
@@ -251,15 +268,16 @@ public class BotMain {
 														System.out.println();
 														
 														String tempMessage = p.getHint();
-														tempMessage += "\n" + p.getAnswer();
+														String tempAnswer = p.getAnswer().replace("\0", " \\_");
+														delimiter = new String(new char[p.getAnswer().length()])
+																.replace("\0", "\\_");
 														
 														if(!printed) {
 															printed = true;															
-															System.out.println(tempMessage);
 															for(TextChannel channel : channels) {
-																String s = tempMessage;
 																channel.createMessage(spec -> spec.setEmbed(embed -> 
-																embed.setDescription(s))).block();
+																embed.setTitle(tempMessage)
+																.addField(tempAnswer, delimiter, false))).block();
 															}
 														}
 													}
@@ -272,22 +290,23 @@ public class BotMain {
 														p.updatePuzzle(data);
 														summaryIDs.add(p.getID());
 														
-														System.out.println();
-														String tempMessage = p.getHint()
-																+ "\nAnswer: " + p.getAnswer() + "\n"
-																+ p.getSolved() + " are still in the game | "
-																+ p.getUnsolved() + " just lost";
+														String tempMessage = p.getHint();
+														String tempAnswer = p.getAnswer();
+														delimiter = new String(new char[p.getAnswer().length()])
+																.replace('\0', '-');
 														
-														tempMessage += "\n Estimated payout: ";
-														tempMessage += String.format("%.2f", new Double(prize)/ new Double(p.getSolved()));
+														String payout = "Estimated Payout: $"
+																+ String.format("%.2f", new Double(prize)
+																/new Double(p.getSolved()));
 														
 														if(printed) {
 															printed = false;
-															System.out.println(tempMessage);
 															for(TextChannel channel : channels) {
-																String s = tempMessage;
 																channel.createMessage(spec -> spec.setEmbed(embed -> 
-																embed.setDescription(s))).block();
+																embed.setTitle(tempMessage)
+																.setDescription(payout + " | "
+																+ p.getSolved() + " are still in the game")
+																.addField(tempAnswer, delimiter, false))).block();
 															}
 														}
 
@@ -299,7 +318,8 @@ public class BotMain {
 													else ended = 0;
 												}
 											} catch (Exception e) {
-										
+												e.printStackTrace();
+												return;
 											}
 										}
 									});
@@ -310,11 +330,15 @@ public class BotMain {
 							
 						}, cec, new URI(socketURL));
 					}
+					CountDownLatch latch = new CountDownLatch(1);
+					latch.await(100, TimeUnit.SECONDS);
 					ended = 0;
 				}
 			} catch(Exception e) {
 				e.printStackTrace();
+				return null;
 			} 
+			
 		}
 	}	
 }
