@@ -40,10 +40,11 @@ import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.TextChannel;
 import discord4j.core.object.util.Snowflake;
+import reactor.core.publisher.Flux;
 
 public class BotMain {
 	private static final String BOT_TOKEN = "XXX";
-	private static final String BEARER = "XXX";
+	private static final String BEARER = "Bearer XXX";
 	
 	private final static ArrayList<TextChannel> channels = new ArrayList<TextChannel>();
 	private final static HashMap<Long, Question> questions = new HashMap<Long, Question>();
@@ -74,14 +75,14 @@ public class BotMain {
 		client.getEventDispatcher().on(MessageCreateEvent.class)
 			.map(MessageCreateEvent::getMessage)
 			.filter(msg->msg.getContent().map(".start"::equals).orElse(false))
-			.flatMap(msg -> hqListen())
+			.flatMap(msg -> BotMain.hqListen())
 			.subscribe();
 		
 		client.login().block();
 		
 	}
 
-	private static Publisher<?> hqListen() {
+	private static Flux<?> hqListen() {
 		
 		for(TextChannel channel : channels) {
 			channel.createMessage("You got it, boss").block();
@@ -268,7 +269,7 @@ public class BotMain {
 														System.out.println();
 														
 														String tempMessage = p.getHint();
-														String tempAnswer = p.getAnswer().replace("\0", " \\_");
+														String tempAnswer = p.getAnswer().replace("\0", "  \\_");
 														delimiter = new String(new char[p.getAnswer().length()])
 																.replace("\0", "\\_");
 														
