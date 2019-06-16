@@ -223,7 +223,7 @@ public class BotMain {
 			c.createMessage("I'm starting up the HQ engine, but be warned that this channel isn't"
 					+ " currently receiving Trivia OR Words output").block();
 		}
-		else c.createMessage("Starting up the HQ engine");		
+		else c.createMessage("Starting up the HQ engine").block();		
 			
 		//just a loop to keep the tool running once it starts
 		while(true) {
