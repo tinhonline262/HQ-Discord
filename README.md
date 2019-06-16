@@ -20,10 +20,15 @@ BOT COMMANDS
 ============
 
 .check - checks to see if the bot is currently working
+
 .checkGames - checks to see what games the current channel will receive messages about
+
 .addTrivia - subscribes the current channel to HQ trivia messages
+
 .addWords - subscribes the current channel to HQ words messages
+
 .removeTrivia - unsubscribes the current channel from trivia messages
+
 .removeWords - unsubscribes the current channel from words messages
 
 DISCLAIMER
