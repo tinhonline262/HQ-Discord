@@ -12,12 +12,19 @@ You need the following:
 
 An HQ bearer token
 <br>A Discord Bot token
-<br>The channel IDs of any channels you want the bot to speak on.
 
 Copy/paste the two tokens into their respective spots near the top of BotMain.java.
-Then in main() copy paste your channel ID into its appropriate spot. If you would like
-the bot to send messages to more than one channel, simply copy paste that entire line of code
-and add a new channel ID to the Snowflake.of() call.
+Then in main() copy paste your channel ID into its appropriate spot. If you would like, you can hardcode channel id's into the appropriate place in main() to retain them every time you start the bot.
+
+BOT COMMANDS
+============
+
+.check - checks to see if the bot is currently working
+.checkGames - checks to see what games the current channel will receive messages about
+.addTrivia - subscribes the current channel to HQ trivia messages
+.addWords - subscribes the current channel to HQ words messages
+.removeTrivia - unsubscribes the current channel from trivia messages
+.removeWords - unsubscribes the current channel from words messages
 
 DISCLAIMER
 ==========
