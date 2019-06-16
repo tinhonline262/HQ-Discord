@@ -31,9 +31,8 @@ BOT COMMANDS
 
 .removeWords - unsubscribes the current channel from words messages
 
-.start - this command is what tells the bot to start listening for HQ broadcasts. Once called, this command will continue
-         until the bot software is closed or the bot crashes. This bot will not output any HQ Trivia or Words output until this
-         command is called for the first time.
+.start - this command is what tells the bot to start listening for HQ broadcasts. Once called, this command will be unusable as the 
+         hq listener will keep running indefinitely, until the bot software is closed or the bot crashes. This bot will not output any            HQ Trivia or Words output until this command is called for the first time.
 
 DISCLAIMER
 ==========
