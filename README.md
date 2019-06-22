@@ -2,7 +2,7 @@
 Just scrapes the HQ api and prints the question/puzzle data out to a discord channel
 
 This is still a work in progress. Code style is kinda awful, this is mostly an exercise in teaching
-myself about interacting with http clients and websockets, with a little React thrown in for good measure.
+myself about interacting with http clients and websockets, with a little reactive programming thrown in for good measure.
 
 
 HOW TO IMPLEMENT
