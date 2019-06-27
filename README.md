@@ -1,3 +1,7 @@
+![](trivia.png)
+
+![](words.png)
+
 # HQ-Discord
 Just scrapes the HQ api and prints the question/puzzle data out to a discord channel
 
@@ -41,7 +45,3 @@ BOT COMMANDS
 
 .start - this command is what tells the bot to start listening for HQ broadcasts. Once called, this command will be unusable as the 
          hq listener will keep running indefinitely, until the bot software is closed or the bot crashes. This bot will not output any            HQ Trivia or Words output until this command is called for the first time. 
-         
-![](trivia.png)
-
-![](words.png)
