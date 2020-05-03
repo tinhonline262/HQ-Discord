@@ -44,7 +44,7 @@ import discord4j.core.object.entity.TextChannel;
 import reactor.core.publisher.Mono;
 
 public class BotMain {
-	private static final String BOT_TOKEN = "XXX";
+	private static final String BOT_TOKEN = "XX";
 	private static final String BEARER = "Bearer XXX";
 	
 	private final static ArrayList<TextChannel> triviaChannels = new ArrayList<TextChannel>();
