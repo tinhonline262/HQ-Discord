@@ -1,1 +1,1 @@
-web: java $JAVA_OPTS -jar target/dependency/jetty-runner.jar --port $PORT target/*.war
+run: java $JAVA_OPTS -Dserver.port=$PORT -jar  build/libs/HQBot-withDependencies-1.1.5.jar
