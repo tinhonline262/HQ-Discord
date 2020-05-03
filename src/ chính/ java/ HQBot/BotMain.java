@@ -44,8 +44,8 @@ import discord4j.core.object.entity.TextChannel;
 import reactor.core.publisher.Mono;
 
 public class BotMain {
-	private static final String BOT_TOKEN = "XX";
-	private static final String BEARER = "Bearer XXX";
+	private static final String BOT_TOKEN = "NzA2Mjk3MTMyNjc1NDk3OTk0.Xq5CRw.oemp1d_JR_SBaKYhQTnrXMtb9ww";
+	private static final String BEARER = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjI1NTEyNDY5LCJ1c2VybmFtZSI6ImxpdGlsYWMiLCJhdmF0YXJVcmwiOiJnczovL2Nkbi1wcm9kLWh5cGUtc3BhY2UvYS8yNTUxMjQ2OS1VREJmUXMiLCJ0b2tlbiI6bnVsbCwicm9sZXMiOltdLCJjbGllbnQiOiIiLCJndWVzdElkIjpudWxsLCJ2IjoxLCJpYXQiOjE1ODg0NDM4NjIsImV4cCI6MTU5NjIxOTg2MiwiaXNzIjoiaHlwZXF1aXovMSJ9.A5uNf84uKZIk9Hc_6PPeCiyP3ppMrfQicg_i68Za2Rs";
 	
 	private final static ArrayList<TextChannel> triviaChannels = new ArrayList<TextChannel>();
 	private final static ArrayList<TextChannel> wordsChannels = new ArrayList<TextChannel>();
