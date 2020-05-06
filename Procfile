@@ -1,1 +1,1 @@
-web: java -jar out/artifacts/lancebot_jar/lancebot.jar
+web: java -jar out/artifacts/HQ-Discord_jar/BotMain.jar
