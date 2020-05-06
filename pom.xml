@@ -33,7 +33,7 @@
 	</dependencies>
 
 	<build>
-		<sourceDirectory>scr/main/java/BotMain.java</sourceDirectory>
+		<sourceDirectory>scr/main/java/HQBot</sourceDirectory>
 		<plugins>
 			<plugin>
 				<groupId>org.jacoco</groupId>
